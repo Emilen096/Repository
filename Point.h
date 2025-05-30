@@ -1,14 +1,7 @@
-#pragma once
+#include "Point.h"
 
-class Point {
-private:
-    double x, y, z;
+Point::Point(double x, double y, double z) : x(x), y(y), z(z) {}
 
-public:
-    Point(double x, double y, double z);
-    
-    // Геттеры
-    double getX() const;
-    double getY() const;
-    double getZ() const;
-};
+double Point::getX() const { return x; }
+double Point::getY() const { return y; }
+double Point::getZ() const { return z; }
