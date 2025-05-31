@@ -1,12 +1,13 @@
 #include "Tetrahedron.h"
 #include <stdexcept>
 #include <cmath>
+#include <limits>
 
 // Конструктор с проверкой на вырожденность
 Tetrahedron::Tetrahedron(const Point& a, const Point& b, const Point& c, const Point& d)
     : a(a), b(b), c(c), d(d) {
     
-    const double tolerance = 1e-9;
+    const double tolerance = std::numeric_limits<double>::epsilon(); // Исправлено
     if (!isValid(tolerance)) {
         throw std::invalid_argument("Points do not form a valid tetrahedron");
     }
