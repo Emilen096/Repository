@@ -4,11 +4,22 @@
 
 int main() {
     try {
-        // Создаём точки
-        Point A(0.0, 0.0, 0.0);
-        Point B(2.0, 0.0, 0.0);
-        Point C(0.0, 3.0, 0.0);
-        Point D(1.0, 1.0, 0.0);
+        double x, y, z;
+        std::cout << "Enter coordinates for point A (x y z): ";
+        std::cin >> x >> y >> z;
+        Point A(x, y, z);
+        
+        std::cout << "Enter coordinates for point B (x y z): ";
+        std::cin >> x >> y >> z;
+        Point B(x, y, z);
+        
+        std::cout << "Enter coordinates for point C (x y z): ";
+        std::cin >> x >> y >> z;
+        Point C(x, y, z);
+        
+        std::cout << "Enter coordinates for point D (x y z): ";
+        std::cin >> x >> y >> z;
+        Point D(x, y, z);
 
         // Создаём тетраэдр (автоматически проверяем валидность)
         Tetrahedron tetra(A, B, C, D);
