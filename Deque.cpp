@@ -2,92 +2,182 @@
 #include <sstream>
 #include <stdexcept>
 
-// Конструктор со списком инициализации
-Deque::Deque(std::initializer_list<int> init) {
-    for (int val : init) {
-        data.push_back(val);
+// Увеличить буфер: удвоить capacity (или сделать 1, если capacity == 0), скопировать элементы
+void Deque::resizeBuffer() {
+    std::size_t newCapacity = (capacity == 0 ? 1 : capacity * 2);
+    int* newData = new int[newCapacity];
+
+    // Копируем в порядке FIFO
+    for (std::size_t i = 0; i < count; ++i) {
+        std::size_t oldIndex = (head + i) % capacity;
+        newData[i] = data[oldIndex];
+    }
+
+    delete[] data;
+    data = newData;
+    capacity = newCapacity;
+    head = 0;
+    tail = count % capacity;
+}
+
+Deque::Deque()
+    : data(nullptr), capacity(0), count(0), head(0), tail(0)
+{}
+
+Deque::Deque(std::initializer_list<int> init)
+    : data(nullptr),
+      capacity(init.size() == 0 ? 1 : init.size() * 2),
+      count(init.size()),
+      head(0),
+      tail(init.size() % (init.size() == 0 ? 1 : init.size() * 2))
+{
+    data = new int[capacity];
+    std::size_t i = 0;
+    for (int v : init) {
+        data[i++] = v;
     }
 }
 
-// Добавление в конец
+Deque::Deque(const Deque& other)
+    : data(nullptr),
+      capacity(other.capacity),
+      count(other.count),
+      head(0),
+      tail(other.count % other.capacity)
+{
+    if (capacity > 0) {
+        data = new int[capacity];
+        for (std::size_t i = 0; i < count; ++i) {
+            std::size_t idx = (other.head + i) % other.capacity;
+            data[i] = other.data[idx];
+        }
+    }
+}
+
+Deque::Deque(Deque&& other) noexcept
+    : data(other.data),
+      capacity(other.capacity),
+      count(other.count),
+      head(other.head),
+      tail(other.tail)
+{
+    other.data = nullptr;
+    other.capacity = 0;
+    other.count = 0;
+    other.head = other.tail = 0;
+}
+
+Deque::~Deque() {
+    delete[] data;
+}
+
+Deque& Deque::operator=(const Deque& other) {
+    if (this == &other) return *this;
+
+    int* newData = nullptr;
+    if (other.capacity > 0) {
+        newData = new int[other.capacity];
+        for (std::size_t i = 0; i < other.count; ++i) {
+            std::size_t idx = (other.head + i) % other.capacity;
+            newData[i] = other.data[idx];
+        }
+    }
+    delete[] data;
+
+    data = newData;
+    capacity = other.capacity;
+    count = other.count;
+    head = 0;
+    tail = count % capacity;
+    return *this;
+}
+
+Deque& Deque::operator=(Deque&& other) noexcept {
+    if (this == &other) return *this;
+
+    delete[] data;
+    data = other.data;
+    capacity = other.capacity;
+    count = other.count;
+    head = other.head;
+    tail = other.tail;
+
+    other.data = nullptr;
+    other.capacity = 0;
+    other.count = 0;
+    other.head = other.tail = 0;
+    return *this;
+}
+
 void Deque::push_back(int value) {
-    data.push_back(value);
+    if (count == capacity) {
+        resizeBuffer();
+    }
+    data[tail] = value;
+    tail = (tail + 1) % capacity;
+    ++count;
 }
 
-// Добавление в начало
 void Deque::push_front(int value) {
-    data.insert(data.begin(), value);
+    if (count == capacity) {
+        resizeBuffer();
+    }
+    head = (head + capacity - 1) % capacity;
+    data[head] = value;
+    ++count;
 }
 
-// Удаление с конца
 void Deque::pop_back() {
-    if (data.empty()) {
-        throw std::out_of_range("Deque is empty");
-    }
-    data.pop_back();
+    if (count == 0) return;
+    tail = (tail + capacity - 1) % capacity;
+    --count;
 }
 
-// Удаление с начала
 void Deque::pop_front() {
-    if (data.empty()) {
-        throw std::out_of_range("Deque is empty");
-    }
-    data.erase(data.begin());
+    if (count == 0) return;
+    head = (head + 1) % capacity;
+    --count;
 }
 
-// Первый элемент
 int Deque::front() const {
-    if (data.empty()) {
-        throw std::out_of_range("Deque is empty");
-    }
-    return data.front();
+    if (count == 0) throw std::out_of_range("Deque is empty");
+    return data[head];
 }
 
-// Последний элемент
 int Deque::back() const {
-    if (data.empty()) {
-        throw std::out_of_range("Deque is empty");
-    }
-    return data.back();
+    if (count == 0) throw std::out_of_range("Deque is empty");
+    std::size_t idx = (head + count - 1) % capacity;
+    return data[idx];
 }
 
-// Проверка на пустоту
-bool Deque::empty() const noexcept {
-    return data.empty();
+bool Deque::empty() const {
+    return (count == 0);
 }
 
-// Размер дека
-size_t Deque::size() const noexcept {
-    return data.size();
+std::size_t Deque::size() const {
+    return count;
 }
 
-// Преобразование в строку
 std::string Deque::toString() const {
     std::ostringstream oss;
-    oss << "[";
-    for (size_t i = 0; i < data.size(); ++i) {
-        oss << (i > 0 ? " " : "") << data[i];
+    oss << "[ ";
+    for (std::size_t i = 0; i < count; ++i) {
+        std::size_t idx = (head + i) % capacity;
+        oss << data[idx] << " ";
     }
     oss << "]";
     return oss.str();
 }
 
-// Оператор вывода (сдвиг влево)
 std::ostream& operator<<(std::ostream& os, const Deque& deque) {
     os << deque.toString();
     return os;
 }
 
-// Оператор ввода (сдвиг вправо)
 std::istream& operator>>(std::istream& is, Deque& deque) {
-    int value;
-    while (is >> value) {
-        deque.push_back(value);
-        
-        // Проверка следующего символа
-        if (is.peek() == '\n' || is.peek() == EOF) {
-            break;
-        }
+    int val;
+    while (is >> val) {
+        deque.push_back(val);
     }
     return is;
 }
