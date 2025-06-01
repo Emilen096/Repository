@@ -1,45 +1,43 @@
 #pragma once
-#include <vector>
+#include <cstddef>
 #include <string>
 #include <initializer_list>
-#include <iostream>
+#include <ostream>
+#include <istream>
 
 class Deque {
 public:
-    // Конструкторы
-    Deque() = default;
+    Deque();
     Deque(std::initializer_list<int> init);
-    Deque(const Deque& other) = default;
-    Deque(Deque&& other) noexcept = default;
-    
-    // Операторы присваивания
-    Deque& operator=(const Deque& other) = default;
-    Deque& operator=(Deque&& other) noexcept = default;
-    
-    // Деструктор
-    ~Deque() = default;
+    Deque(const Deque& other);
+    Deque(Deque&& other) noexcept;
+    ~Deque();
 
-    // Основные операции
+    Deque& operator=(const Deque& other);
+    Deque& operator=(Deque&& other) noexcept;
+
     void push_back(int value);
     void push_front(int value);
     void pop_back();
     void pop_front();
 
-    // Доступ к элементам
     int front() const;
     int back() const;
 
-    // Состояние дека
-    bool empty() const noexcept;
-    size_t size() const noexcept;
-    
-    // Преобразование в строку
+    bool empty() const;
+    std::size_t size() const;
     std::string toString() const;
 
-    // Операторы сдвига
     friend std::ostream& operator<<(std::ostream& os, const Deque& deque);
     friend std::istream& operator>>(std::istream& is, Deque& deque);
 
 private:
-    std::vector<int> data;
+    int*         data;      // Указатель на динамически выделенный массив элементов
+    std::size_t  capacity;  // Емкость массива
+    std::size_t  count;     // Сколько элементов сейчас хранится
+    std::size_t  head;      // Индекс в массиве, где находится первый (front) элемент
+    std::size_t  tail;      // Индекс “за” последним (back) элементом; invariant: tail = (head + count) % capacity
+
+    void resizeBuffer();
+
 };
