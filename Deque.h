@@ -2,13 +2,12 @@
 #include <cstddef>
 #include <initializer_list>
 #include <string>
-#include <iostream>
 
 class Deque {
 private:
-    static const std::size_t capacity = 100;  // Статическое максимальное значение
-    int data[capacity];                       
-    std::size_t count;                        
+    static const std::size_t capacity = 100; // Статическое максимальное значение
+    int data[capacity];
+    std::size_t count;
 
 public:
     Deque();
@@ -27,11 +26,9 @@ public:
 
     int front() const;
     int back() const;
+
     bool empty() const;
     std::size_t size() const;
 
     std::string toString() const;
-
-    friend std::ostream& operator<<(std::ostream& os, const Deque& deque);
-    friend std::istream& operator>>(std::istream& is, Deque& deque);
 };
