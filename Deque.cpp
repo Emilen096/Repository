@@ -4,7 +4,7 @@
 #include <algorithm>
 
 // Инициализация статической переменной
-std::size_t Deque::capacity = 1000;  // Максимальная ёмкость
+std::size_t Deque::capacity = 100;  // Максимальная ёмкость
 
 // Конструктор по умолчанию
 Deque::Deque()
