@@ -3,6 +3,9 @@
 #include <stdexcept>
 #include <algorithm>
 
+// Инициализация статической переменной
+std::size_t Deque::capacity = 1000;  // Максимальная ёмкость
+
 // Конструктор по умолчанию
 Deque::Deque()
     : data(nullptr), count(0)
@@ -90,7 +93,7 @@ Deque& Deque::operator=(Deque&& other) noexcept {
 
 // Добавление элемента в конец
 void Deque::push_back(int value) {
-    if (count == capacity) {
+    if (count >= capacity) {
         throw std::overflow_error("Deque is full, cannot push_back");
     }
     
@@ -101,11 +104,16 @@ void Deque::push_back(int value) {
     delete[] data;
     data = newData;
     ++count;
+
+    // Проверка на превышение ёмкости
+    if (count > capacity) {
+        count = capacity;  // Обрезаем до максимальной ёмкости
+    }
 }
 
 // Добавление элемента в начало
 void Deque::push_front(int value) {
-    if (count == capacity) {
+    if (count >= capacity) {
         throw std::overflow_error("Deque is full, cannot push_front");
     }
 
@@ -116,6 +124,11 @@ void Deque::push_front(int value) {
     delete[] data;
     data = newData;
     ++count;
+
+    // Проверка на превышение ёмкости
+    if (count > capacity) {
+        count = capacity;  // Обрезаем до максимальной ёмкости
+    }
 }
 
 // Удаление элемента с конца
