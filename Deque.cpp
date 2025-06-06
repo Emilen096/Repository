@@ -3,110 +3,194 @@
 #include <stdexcept>
 #include <algorithm>
 
+// Конструктор по умолчанию
 Deque::Deque()
-    : count(0) {}
+    : data(nullptr), count(0)
+{}
 
+// Конструктор с инициализацией из списка
 Deque::Deque(std::initializer_list<int> init)
-    : count(init.size()) {
-    if (count > capacity)
-        throw std::length_error("Initializer list exceeds maximum capacity");
-    std::copy(init.begin(), init.end(), data);
+    : data(nullptr), count(init.size())
+{
+    if (count > capacity) {
+        throw std::out_of_range("Cannot initialize deque: exceeds maximum capacity");
+    }
+    
+    data = new int[count];
+    std::size_t i = 0;
+    for (int v : init) {
+        data[i++] = v;
+    }
 }
 
+// Конструктор копирования
 Deque::Deque(const Deque& other)
-    : count(other.count) {
-    std::copy(other.data, other.data + other.count, data);
+    : data(nullptr), count(other.count)
+{
+    if (count > capacity) {
+        throw std::out_of_range("Cannot copy deque: exceeds maximum capacity");
+    }
+
+    if (count > 0) {
+        data = new int[count];
+        for (std::size_t i = 0; i < count; ++i) {
+            data[i] = other.data[i];
+        }
+    }
 }
 
+// Конструктор перемещения
 Deque::Deque(Deque&& other) noexcept
-    : count(other.count) {
-    std::copy(other.data, other.data + other.count, data);
+    : data(other.data), count(other.count)
+{
+    other.data = nullptr;
     other.count = 0;
 }
 
+// Деструктор
+Deque::~Deque() {
+    delete[] data;
+}
+
+// Оператор присваивания (копирование)
 Deque& Deque::operator=(const Deque& other) {
     if (this == &other) return *this;
+
+    delete[] data;
+    
     count = other.count;
-    std::copy(other.data, other.data + other.count, data);
+    if (count > capacity) {
+        throw std::out_of_range("Cannot copy deque: exceeds maximum capacity");
+    }
+
+    if (count > 0) {
+        data = new int[count];
+        for (std::size_t i = 0; i < count; ++i) {
+            data[i] = other.data[i];
+        }
+    }
+
     return *this;
 }
 
+// Оператор присваивания (перемещение)
 Deque& Deque::operator=(Deque&& other) noexcept {
     if (this == &other) return *this;
+
+    delete[] data;
+    
+    data = other.data;
     count = other.count;
-    std::copy(other.data, other.data + other.count, data);
+    
+    other.data = nullptr;
     other.count = 0;
+
     return *this;
 }
 
+// Добавление элемента в конец
 void Deque::push_back(int value) {
-    if (count >= capacity)
-        throw std::overflow_error("Deque is full");
-    data[count++] = value;
-}
-
-void Deque::push_front(int value) {
-    if (count >= capacity)
-        throw std::overflow_error("Deque is full");
-    for (std::size_t i = count; i > 0; --i) {
-        data[i] = data[i - 1];
+    if (count == capacity) {
+        throw std::overflow_error("Deque is full, cannot push_back");
     }
-    data[0] = value;
+    
+    int* newData = new int[count + 1];
+    std::copy(data, data + count, newData);
+    newData[count] = value;
+    
+    delete[] data;
+    data = newData;
     ++count;
 }
 
+// Добавление элемента в начало
+void Deque::push_front(int value) {
+    if (count == capacity) {
+        throw std::overflow_error("Deque is full, cannot push_front");
+    }
+
+    int* newData = new int[count + 1];
+    std::copy(data, data + count, newData + 1);
+    newData[0] = value;
+    
+    delete[] data;
+    data = newData;
+    ++count;
+}
+
+// Удаление элемента с конца
 void Deque::pop_back() {
     if (count == 0) return;
+    
+    int* newData = new int[count - 1];
+    std::copy(data, data + count - 1, newData);
+    
+    delete[] data;
+    data = newData;
     --count;
 }
 
+// Удаление элемента с начала
 void Deque::pop_front() {
     if (count == 0) return;
-    for (std::size_t i = 0; i < count - 1; ++i) {
-        data[i] = data[i + 1];
-    }
+
+    int* newData = new int[count - 1];
+    std::copy(data + 1, data + count, newData);
+
+    delete[] data;
+    data = newData;
     --count;
 }
 
+// Получить первый элемент
 int Deque::front() const {
-    if (count == 0)
-        throw std::out_of_range("Deque is empty");
+    if (count == 0) throw std::out_of_range("Deque is empty");
     return data[0];
 }
 
+// Получить последний элемент
 int Deque::back() const {
-    if (count == 0)
-        throw std::out_of_range("Deque is empty");
+    if (count == 0) throw std::out_of_range("Deque is empty");
     return data[count - 1];
 }
 
-bool Deque::empty() const {
-    return count == 0;
+// Проверка на пустоту
+bool Deque::empty() const noexcept {
+    return (count == 0);
 }
 
-std::size_t Deque::size() const {
+// Получить размер очереди
+std::size_t Deque::size() const noexcept {
     return count;
 }
 
+// Преобразовать очередь в строку
 std::string Deque::toString() const {
     std::ostringstream oss;
-    oss << "[ ";
+    oss << "[";
     for (std::size_t i = 0; i < count; ++i) {
-        oss << data[i] << " ";
+        oss << (i > 0 ? " " : "") << data[i];
     }
     oss << "]";
     return oss.str();
 }
 
+// Оператор вывода
 std::ostream& operator<<(std::ostream& os, const Deque& deque) {
     os << deque.toString();
     return os;
 }
 
+// Оператор ввода
 std::istream& operator>>(std::istream& is, Deque& deque) {
-    int val;
-    while (is >> val) {
-        deque.push_back(val);
+    int value;
+    while (is >> value) {
+        deque.push_back(value);
+        
+        // Проверка на конец строки
+        if (is.peek() == '\n' || is.peek() == EOF) {
+            break;
+        }
     }
     return is;
 }
