@@ -1,157 +1,87 @@
 #include "Deque.h"
 #include <sstream>
 #include <stdexcept>
-
-// Увеличить буфер: удвоить capacity (или сделать 1, если capacity == 0), скопировать элементы
-void Deque::resizeBuffer() {
-    std::size_t newCapacity = (capacity == 0 ? 1 : capacity * 2);
-    int* newData = new int[newCapacity];
-
-    // Копируем в порядке FIFO
-    for (std::size_t i = 0; i < count; ++i) {
-        std::size_t oldIndex = (head + i) % capacity;
-        newData[i] = data[oldIndex];
-    }
-
-    delete[] data;
-    data = newData;
-    capacity = newCapacity;
-    head = 0;
-    tail = count % capacity;
-}
+#include <algorithm>
 
 Deque::Deque()
-    : data(nullptr), capacity(0), count(0), head(0), tail(0)
-{}
+    : count(0) {}
 
 Deque::Deque(std::initializer_list<int> init)
-    : data(nullptr),
-      count(init.size()),
-      capacity(init.size() == 0 ? 1 : init.size() * 2),  // трактуется как max допустимый размер
-      head(0),
-      tail(init.size())  // tail указывает за последним
-{
-    data = new int[count];  // выделяется буфер ровно под count элементов
-    std::size_t i = 0;
-    for (int v : init) {
-        data[i++] = v;
-    }
+    : count(init.size()) {
+    if (count > capacity)
+        throw std::length_error("Initializer list exceeds maximum capacity");
+    std::copy(init.begin(), init.end(), data);
 }
 
 Deque::Deque(const Deque& other)
-    : data(nullptr),
-      capacity(other.capacity),
-      count(other.count),
-      head(0),
-      tail(other.count % (other.capacity == 0 ? 1 : other.capacity))  // защита от деления на 0
-{
-    if (count > 0) {
-        data = new int[count];  // копируем ровно count элементов
-        for (std::size_t i = 0; i < count; ++i) {
-            std::size_t idx = (other.head + i) % other.capacity;
-            data[i] = other.data[idx];
-        }
-    }
+    : count(other.count) {
+    std::copy(other.data, other.data + other.count, data);
 }
 
 Deque::Deque(Deque&& other) noexcept
-    : data(other.data),
-      capacity(other.capacity),
-      count(other.count),
-      head(other.head),
-      tail(other.tail)
-{
-    other.data = nullptr;
-    other.capacity = 0;
+    : count(other.count) {
+    std::copy(other.data, other.data + other.count, data);
     other.count = 0;
-    other.head = other.tail = 0;
-}
-
-Deque::~Deque() {
-    delete[] data;
 }
 
 Deque& Deque::operator=(const Deque& other) {
     if (this == &other) return *this;
-
-    int* newData = nullptr;
-    if (other.count > 0) {
-        newData = new int[other.count]; 
-        for (std::size_t i = 0; i < other.count; ++i) {
-            std::size_t idx = (other.head + i) % other.capacity;
-            newData[i] = other.data[idx];
-        }
-    }
-    delete[] data;
-
-    data = newData;
-    capacity = other.capacity;
     count = other.count;
-    head = 0;
-    tail = count % (capacity == 0 ? 1 : capacity);
+    std::copy(other.data, other.data + other.count, data);
     return *this;
 }
 
 Deque& Deque::operator=(Deque&& other) noexcept {
     if (this == &other) return *this;
-
-    delete[] data;
-    data = other.data;
-    capacity = other.capacity;
     count = other.count;
-    head = other.head;
-    tail = other.tail;
-
-    other.data = nullptr;
-    other.capacity = 0;
+    std::copy(other.data, other.data + other.count, data);
     other.count = 0;
-    other.head = other.tail = 0;
     return *this;
 }
 
 void Deque::push_back(int value) {
-    if (count == capacity) {
-        resizeBuffer();
-    }
-    data[tail] = value;
-    tail = (tail + 1) % capacity;
-    ++count;
+    if (count >= capacity)
+        throw std::overflow_error("Deque is full");
+    data[count++] = value;
 }
 
 void Deque::push_front(int value) {
-    if (count == capacity) {
-        resizeBuffer();
+    if (count >= capacity)
+        throw std::overflow_error("Deque is full");
+    for (std::size_t i = count; i > 0; --i) {
+        data[i] = data[i - 1];
     }
-    head = (head + capacity - 1) % capacity;
-    data[head] = value;
+    data[0] = value;
     ++count;
 }
 
 void Deque::pop_back() {
     if (count == 0) return;
-    tail = (tail + capacity - 1) % capacity;
     --count;
 }
 
 void Deque::pop_front() {
     if (count == 0) return;
-    head = (head + 1) % capacity;
+    for (std::size_t i = 0; i < count - 1; ++i) {
+        data[i] = data[i + 1];
+    }
     --count;
 }
 
 int Deque::front() const {
-    if (count == 0) throw std::out_of_range("Deque is empty");
-    return data[head];
+    if (count == 0)
+        throw std::out_of_range("Deque is empty");
+    return data[0];
 }
 
 int Deque::back() const {
-    if (count == 0) throw std::out_of_range("Deque is empty");
-    std::size_t idx = (head + count - 1) % capacity;
-    return data[idx];
+    if (count == 0)
+        throw std::out_of_range("Deque is empty");
+    return data[count - 1];
 }
 
 bool Deque::empty() const {
-    return (count == 0);
+    return count == 0;
 }
 
 std::size_t Deque::size() const {
@@ -162,8 +92,7 @@ std::string Deque::toString() const {
     std::ostringstream oss;
     oss << "[ ";
     for (std::size_t i = 0; i < count; ++i) {
-        std::size_t idx = (head + i) % capacity;
-        oss << data[idx] << " ";
+        oss << data[i] << " ";
     }
     oss << "]";
     return oss.str();
