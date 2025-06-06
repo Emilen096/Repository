@@ -33,8 +33,8 @@ public:
 
 private:
     int*         data;      // Указатель на динамически выделенный массив элементов
-    std::size_t  capacity;  // Емкость массива
-    std::size_t  count;     // Сколько элементов сейчас хранится
+    std::size_t  capacity;  // Максимально допустимое количество элементов
+    std::size_t  count;     // Текущее количество элементов в деке
     std::size_t  head;      // Индекс в массиве, где находится первый (front) элемент
     std::size_t  tail;      // Индекс “за” последним (back) элементом; invariant: tail = (head + count) % capacity
 
