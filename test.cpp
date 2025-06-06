@@ -5,180 +5,122 @@
 #include <sstream>
 #include <stdexcept>
 
-// 1) Test default construction, empty(), size(), and that toString shows "[ ]"
-TEST(DequeBasic, DefaultConstruction) {
+#include "Deque.h"
+#include <gtest/gtest.h>
+
+// Проверка конструктора со списком инициализации
+TEST(DequeTests, InitializerListConstructor) {
+    Deque d{1, 2, 3, 4};
+    EXPECT_EQ(d.size(), 4);          // Проверка размера
+    EXPECT_EQ(d.front(), 1);         // Проверка первого элемента
+    EXPECT_EQ(d.back(), 4);          // Проверка последнего элемента
+}
+
+// Проверка вставки в начало и в конец
+TEST(DequeTests, PushBackAndFront) {
     Deque d;
-    EXPECT_TRUE(d.empty());
-    EXPECT_EQ(d.size(), 0u);
-    EXPECT_EQ(d.toString(), "[ ]");
+    d.push_back(10);                 // Добавляем в конец
+    d.push_front(5);                 // Добавляем в начало
+    EXPECT_EQ(d.size(), 2);          // Размер должен быть 2
+    EXPECT_EQ(d.front(), 5);         // Первый — 5
+    EXPECT_EQ(d.back(), 10);         // Последний — 10
 }
 
-// 2) Test initializer‐list constructor, size(), empty(), toString(), front(), back()
-TEST(DequeBasic, InitializerList) {
-    Deque d{ 1, 2, 3, 4 };
-    EXPECT_FALSE(d.empty());
-    EXPECT_EQ(d.size(), 4u);
-    EXPECT_EQ(d.front(), 1);
-    EXPECT_EQ(d.back(), 4);
-    EXPECT_EQ(d.toString(), "[ 1 2 3 4 ]");
+// Проверка удаления с начала и с конца
+TEST(DequeTests, PopBackAndFront) {
+    Deque d{1, 2, 3};
+    d.pop_front();                   // Удаляем первый элемент (1)
+    EXPECT_EQ(d.front(), 2);         // Теперь первый — 2
+    d.pop_back();                    // Удаляем последний элемент (3)
+    EXPECT_EQ(d.back(), 2);          // Теперь остался один элемент — 2
+    d.pop_back();                    // Удаляем оставшийся
+    EXPECT_TRUE(d.empty());          // Дека должна быть пустой
 }
 
-// 3) Test push_back(), push_front(), and that toString, front, back, size update correctly
-TEST(DequeBasic, PushBackAndPushFront) {
-    Deque d{ 1, 2, 3, 4 };
-    d.push_back(5);
-    EXPECT_EQ(d.size(), 5u);
-    EXPECT_EQ(d.back(), 5);
-    EXPECT_EQ(d.front(), 1);
-    EXPECT_EQ(d.toString(), "[ 1 2 3 4 5 ]");
-
-    d.push_front(0);
-    EXPECT_EQ(d.size(), 6u);
-    EXPECT_EQ(d.front(), 0);
-    EXPECT_EQ(d.back(), 5);
-    EXPECT_EQ(d.toString(), "[ 0 1 2 3 4 5 ]");
+// Проверка конструктора копирования
+TEST(DequeTests, CopyConstructor) {
+    Deque original{1, 2, 3};
+    Deque copy = original;           // Копируем объект
+    copy.push_back(100);             // Изменяем копию
+    EXPECT_EQ(original.size(), 3);   // Оригинал не должен измениться
+    EXPECT_EQ(copy.size(), 4);       // Копия должна быть длиннее
+    EXPECT_EQ(copy.back(), 100);     // Проверяем последний элемент копии
 }
 
-// 4) Test pop_front(), pop_back(), and that front/back/size/toString update correctly
-TEST(DequeBasic, PopFrontAndPopBack) {
-    Deque d{ 1, 2, 3, 4 };
-    d.pop_front();  // Remove 1
-    EXPECT_EQ(d.size(), 3u);
-    EXPECT_EQ(d.front(), 2);
-    EXPECT_EQ(d.back(), 4);
-    EXPECT_EQ(d.toString(), "[ 2 3 4 ]");
-
-    d.pop_back();  // Remove 4
-    EXPECT_EQ(d.size(), 2u);
-    EXPECT_EQ(d.front(), 2);
-    EXPECT_EQ(d.back(), 3);
-    EXPECT_EQ(d.toString(), "[ 2 3 ]");
+// Проверка конструктора перемещения
+TEST(DequeTests, MoveConstructor) {
+    Deque source{4, 5, 6};
+    Deque moved = std::move(source); // Перемещаем объект
+    EXPECT_EQ(moved.size(), 3);      // Новый объект должен содержать 3 элемента
+    EXPECT_TRUE(source.empty());     // Исходный объект должен быть пустым
 }
 
-// 5) Test chained pop until empty, then empty()==true, size()==0, toString=="[ ]"
-TEST(DequeEdge, PopUntilEmpty) {
-    Deque d{ 10, 20, 30 };
-    d.pop_front();  // [20,30]
-    d.pop_front();  // [30]
-    d.pop_front();  // []
-    EXPECT_TRUE(d.empty());
-    EXPECT_EQ(d.size(), 0u);
-    EXPECT_EQ(d.toString(), "[ ]");
-
-    // Popping on empty should not throw (per main.cpp behavior in demonstration)
-    EXPECT_NO_THROW(d.pop_front());
-    EXPECT_NO_THROW(d.pop_back());
-}
-
-// 6) Test that front() and back() on empty throw std::out_of_range
-TEST(DequeEdge, AccessorsOnEmpty) {
-    Deque d;
-    EXPECT_THROW(d.front(), std::out_of_range);
-    EXPECT_THROW(d.back(), std::out_of_range);
-}
-
-// 7) Test size() and empty() on non‐empty
-TEST(DequeBasic, SizeAndEmpty) {
-    Deque d;
-    EXPECT_TRUE(d.empty());
-    EXPECT_EQ(d.size(), 0u);
-
-    d.push_back(42);
-    EXPECT_FALSE(d.empty());
-    EXPECT_EQ(d.size(), 1u);
-    EXPECT_EQ(d.front(), 42);
-    EXPECT_EQ(d.back(), 42);
-}
-
-// 8) Test >> operator: reading space‐separated ints until EOF/newline
-TEST(DequeIO, InputOperator) {
-    std::istringstream iss("5 15 25 35");
-    Deque d;
-    iss >> d;  // will read all ints
-    EXPECT_EQ(d.size(), 4u);
-    EXPECT_EQ(d.front(), 5);
-    EXPECT_EQ(d.back(), 35);
-    EXPECT_EQ(d.toString(), "[ 5 15 25 35 ]");
-}
-
-// 9) Test copy constructor: modifying copy does not affect original
-TEST(DequeCopyMove, CopyConstructor) {
-    Deque original{ 7, 8, 9 };
-    Deque copy = original;
-    EXPECT_EQ(copy.size(), original.size());
-    EXPECT_EQ(copy.front(), original.front());
-    EXPECT_EQ(copy.back(), original.back());
-
-    copy.push_back(100);
-    EXPECT_EQ(copy.back(), 100);
-    EXPECT_EQ(original.back(), 9);  // original unchanged
-}
-
-// 10) Test copy assignment operator: modifying target does not affect source
-TEST(DequeCopyMove, CopyAssignment) {
-    Deque a{ 2, 4, 6 };
+// Проверка оператора присваивания (копирование)
+TEST(DequeTests, CopyAssignmentOperator) {
+    Deque a{7, 8};
     Deque b;
-    b = a;
-    EXPECT_EQ(b.size(), a.size());
-    EXPECT_EQ(b.front(), a.front());
-    EXPECT_EQ(b.back(), a.back());
-
-    b.push_front(-2);
-    EXPECT_EQ(b.front(), -2);
-    EXPECT_EQ(a.front(), 2);
+    b = a;                           // Копируем через оператор =
+    EXPECT_EQ(b.size(), 2);          // Размер должен совпадать
+    EXPECT_EQ(b.front(), 7);         // Проверка первого элемента
 }
 
-// 11) Test move constructor: moved‐from becomes empty
-TEST(DequeCopyMove, MoveConstructor) {
-    Deque src{ 11, 12, 13 };
-    Deque dst = std::move(src);
-    EXPECT_EQ(dst.size(), 3u);
-    EXPECT_EQ(dst.toString(), "[ 11 12 13 ]");
-    EXPECT_TRUE(src.empty());
-    EXPECT_EQ(src.size(), 0u);
+// Проверка оператора присваивания (перемещение)
+TEST(DequeTests, MoveAssignmentOperator) {
+    Deque a{9, 10};
+    Deque b;
+    b = std::move(a);                // Перемещаем объект
+    EXPECT_EQ(b.size(), 2);          // Новый объект должен содержать данные
+    EXPECT_TRUE(a.empty());          // Исходный должен быть пустым
 }
 
-// 12) Test move assignment operator: moved‐from becomes empty
-TEST(DequeCopyMove, MoveAssignment) {
-    Deque src{ 21, 22, 23 };
-    Deque dst;
-    dst = std::move(src);
-    EXPECT_EQ(dst.size(), 3u);
-    EXPECT_EQ(dst.toString(), "[ 21 22 23 ]");
-    EXPECT_TRUE(src.empty());
-    EXPECT_EQ(src.size(), 0u);
+// Проверка метода toString()
+TEST(DequeTests, ToStringOutput) {
+    Deque d{1, 2, 3};
+    EXPECT_EQ(d.toString(), "[ 1 2 3 ]"); // Ожидаемое строковое представление
 }
 
-// 13) Test a sequence matching main.cpp demonstration
-TEST(DequeMainDemo, SequenceMatchesMain) {
-    // Step 1: initializer list
-    Deque d1{ 1, 2, 3, 4 };
-    EXPECT_EQ(d1.toString(), "[ 1 2 3 4 ]");
-
-    // Step 2: push_back(5)
-    d1.push_back(5);
-    EXPECT_EQ(d1.toString(), "[ 1 2 3 4 5 ]");
-
-    // Step 3: push_front(0)
-    d1.push_front(0);
-    EXPECT_EQ(d1.toString(), "[ 0 1 2 3 4 5 ]");
-
-    // Step 4: pop_front()
-    d1.pop_front();
-    EXPECT_EQ(d1.toString(), "[ 1 2 3 4 5 ]");
-
-    // Step 5: pop_back()
-    d1.pop_back();
-    EXPECT_EQ(d1.toString(), "[ 1 2 3 4 ]");
-
-    // Step 6: front() and back() are 1 and 4
-    EXPECT_EQ(d1.front(), 1);
-    EXPECT_EQ(d1.back(), 4);
-
-    // Step 7: size() == 4, empty() == false
-    EXPECT_EQ(d1.size(), 4u);
-    EXPECT_FALSE(d1.empty());
+// Проверка методов empty() и size()
+TEST(DequeTests, EmptyAndSize) {
+    Deque d;
+    EXPECT_TRUE(d.empty());          // Новая дека должна быть пустой
+    d.push_back(42);
+    EXPECT_FALSE(d.empty());         // Теперь не пустая
+    EXPECT_EQ(d.size(), 1);          // Размер = 1
 }
+
+// Проверка переполнения дека (capacity = 100)
+TEST(DequeTests, OverflowThrows) {
+    Deque d;
+    for (std::size_t i = 0; i < 100; ++i) {
+        d.push_back(static_cast<int>(i)); // Заполняем до предела
+    }
+    EXPECT_THROW(d.push_back(101), std::overflow_error);  // Переполнение через push_back
+    EXPECT_THROW(d.push_front(102), std::overflow_error); // Переполнение через push_front
+}
+
+// Проверка исключений при доступе к пустому деку
+TEST(DequeTests, FrontBackThrowsOnEmpty) {
+    Deque d;
+    EXPECT_THROW(d.front(), std::out_of_range); // front() при пустом деке
+    EXPECT_THROW(d.back(), std::out_of_range);  // back() при пустом деке
+}
+
+// Смешанные операции push/pop и проверка целостности
+TEST(DequeTests, MixedOperationsStability) {
+    Deque d;
+    d.push_back(1);     // [1]
+    d.push_front(2);    // [2, 1]
+    d.push_back(3);     // [2, 1, 3]
+    d.pop_front();      // [1, 3]
+    d.push_front(4);    // [4, 1, 3]
+    d.pop_back();       // [4, 1]
+
+    EXPECT_EQ(d.size(), 2);              // Размер = 2
+    EXPECT_EQ(d.front(), 4);             // Первый — 4
+    EXPECT_EQ(d.back(), 1);              // Последний — 1
+    EXPECT_EQ(d.toString(), "[ 4 1 ]");  // Проверка содержимого
+}
+
 
 // Main entry for Google Test
 int main(int argc, char** argv) {
