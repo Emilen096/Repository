@@ -26,12 +26,12 @@ Deque::Deque()
 
 Deque::Deque(std::initializer_list<int> init)
     : data(nullptr),
-      capacity(init.size() == 0 ? 1 : init.size() * 2),
       count(init.size()),
+      capacity(init.size() == 0 ? 1 : init.size() * 2),  // трактуется как max допустимый размер
       head(0),
-      tail(init.size() % (init.size() == 0 ? 1 : init.size() * 2))
+      tail(init.size())  // tail указывает за последним
 {
-    data = new int[capacity];
+    data = new int[count];  // выделяется буфер ровно под count элементов
     std::size_t i = 0;
     for (int v : init) {
         data[i++] = v;
@@ -43,10 +43,10 @@ Deque::Deque(const Deque& other)
       capacity(other.capacity),
       count(other.count),
       head(0),
-      tail(other.count % other.capacity)
+      tail(other.count % (other.capacity == 0 ? 1 : other.capacity))  // защита от деления на 0
 {
-    if (capacity > 0) {
-        data = new int[capacity];
+    if (count > 0) {
+        data = new int[count];  // копируем ровно count элементов
         for (std::size_t i = 0; i < count; ++i) {
             std::size_t idx = (other.head + i) % other.capacity;
             data[i] = other.data[idx];
@@ -75,8 +75,8 @@ Deque& Deque::operator=(const Deque& other) {
     if (this == &other) return *this;
 
     int* newData = nullptr;
-    if (other.capacity > 0) {
-        newData = new int[other.capacity];
+    if (other.count > 0) {
+        newData = new int[other.count]; 
         for (std::size_t i = 0; i < other.count; ++i) {
             std::size_t idx = (other.head + i) % other.capacity;
             newData[i] = other.data[idx];
@@ -88,7 +88,7 @@ Deque& Deque::operator=(const Deque& other) {
     capacity = other.capacity;
     count = other.count;
     head = 0;
-    tail = count % capacity;
+    tail = count % (capacity == 0 ? 1 : capacity);
     return *this;
 }
 
