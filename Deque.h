@@ -7,8 +7,8 @@
 class Deque {
 private:
     static const std::size_t capacity = 100;  // Статическое максимальное значение
-    int data[capacity];                       // Статический массив
-    std::size_t count;                        // Количество элементов
+    int data[capacity];                       
+    std::size_t count;                        
 
 public:
     Deque();
