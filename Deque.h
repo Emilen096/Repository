@@ -1,20 +1,18 @@
 #pragma once
 #include <cstddef>
-#include <initializer_list>
 #include <string>
+#include <initializer_list>
+#include <ostream>
+#include <istream>
+#include <stdexcept>
 
 class Deque {
-private:
-    static const std::size_t capacity = 100; // Статическое максимальное значение
-    int data[capacity];
-    std::size_t count;
-
 public:
     Deque();
     Deque(std::initializer_list<int> init);
     Deque(const Deque& other);
     Deque(Deque&& other) noexcept;
-    ~Deque() = default;
+    ~Deque();
 
     Deque& operator=(const Deque& other);
     Deque& operator=(Deque&& other) noexcept;
@@ -29,6 +27,14 @@ public:
 
     bool empty() const;
     std::size_t size() const;
-
     std::string toString() const;
+
+    friend std::ostream& operator<<(std::ostream& os, const Deque& deque);
+    friend std::istream& operator>>(std::istream& is, Deque& deque);
+
+private:
+    int* data;            // Указатель на динамически выделенный массив элементов
+    std::size_t count;    // Количество элементов в очереди
+
+    static const std::size_t capacity = 100;  // Статическая максимальная ёмкость
 };
